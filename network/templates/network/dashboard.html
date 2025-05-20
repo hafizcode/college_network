@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">📨 Message & File Sharing</h2>
+
+  <div class="row">
+    <!-- Send Message -->
+    <div class="col-md-6">
+      <h4>✉️ Send Message</h4>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="id_receiver" class="form-label">Recipient</label>
+          <select name="receiver" class="form-select" id="id_receiver">
+            {% for user in msg_form.fields.receiver.queryset %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="id_content" class="form-label">Message</label>
+          <textarea name="content" class="form-control" id="id_content" rows="4"></textarea>
+        </div>
+
+        <button type="submit" name="send_message" class="btn btn-primary w-100">Send Message</button>
+      </form>
+    </div>
+
+    <!-- Send File -->
+    <div class="col-md-6">
+      <h4>📤 Send File</h4>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="id_file_receiver" class="form-label">Recipient</label>
+          <select name="receiver" class="form-select" id="id_file_receiver">
+            {% for user in file_form.fields.receiver.queryset %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="id_file" class="form-label">Select File</label>
+          <input type="file" name="file" class="form-control" id="id_file">
+        </div>
+
+        <button type="submit" name="send_file" class="btn btn-success w-100">Send File</button>
+      </form>
+    </div>
+  </div>
+
+  <hr class="my-5">
+
+  <!-- Received Messages -->
+  <h4>📬 Received Messages</h4>
+  <ul class="list-group mb-4" id="message-list">
+    {% for msg in messages %}
+    <li class="list-group-item">
+      <strong>{{ msg.sender.username }}:</strong> {{ msg.content }}<br>
+      <small>{{ msg.timestamp }}</small>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No messages yet.</li>
+    {% endfor %}
+  </ul>
+
+  <h4>📁 Received Files</h4>
+  <ul class="list-group" id="file-list">
+    {% for file in files %}
+    <li class="list-group-item">
+      <strong>{{ file.sender.username }}:</strong>
+      <a href="{{ file.file.url }}" download>{{ file.file.name|slice:"15:" }}</a><br>
+      <small>{{ file.timestamp }}</small>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No files received.</li>
+    {% endfor %}
+  </ul>
+
+</div>
+
+<script>
+  function fetchUpdates() {
+    fetch("{% url 'fetch_updates' %}")
+      .then(response => response.json())
+      .then(data => {
+        const messageList = document.getElementById('message-list');
+        const fileList = document.getElementById('file-list');
+
+        // Update messages
+        messageList.innerHTML = '';
+        data.messages.forEach(msg => {
+          messageList.innerHTML += `
+            <li class="list-group-item">
+              <strong>${msg.sender}:</strong> ${msg.content}<br>
+              <small>${msg.timestamp}</small>
+            </li>`;
+        });
+
+        // Update files
+        fileList.innerHTML = '';
+        data.files.forEach(file => {
+          fileList.innerHTML += `
+            <li class="list-group-item">
+              <strong>${file.sender}:</strong>
+              <a href="${file.url}" download>${file.filename}</a><br>
+              <small>${file.timestamp}</small>
+            </li>`;
+        });
+      });
+  }
+
+  setInterval(fetchUpdates, 5000); // Fetch every 5 seconds
+</script>
+
+{% endblock %}

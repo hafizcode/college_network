@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width: 400px;">
+  <h2>Delete User</h2>
+  <p>Are you sure you want to delete user <strong>{{ user_obj.username }}</strong>?</p>
+  <form method="POST">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger w-100">Delete</button>
+    <a href="{% url 'user_list' %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width: 500px;">
+  <h2 class="mb-4">🔐 Login</h2>
+  <form method="POST" novalidate>
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      <label for="id_username" class="form-label">Username</label>
+      <input type="text" name="username" class="form-control" id="id_username" value="{{ form.username.value|default:'' }}">
+      {% if form.username.errors %}
+        <div class="text-danger mt-1">{{ form.username.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label for="id_password" class="form-label">Password</label>
+      <input type="password" name="password" class="form-control" id="id_password">
+      {% if form.password.errors %}
+        <div class="text-danger mt-1">{{ form.password.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success w-100">Login</button>
+  </form>
+</div>
+{% endblock %}
