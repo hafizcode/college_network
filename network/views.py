@@ -9,11 +9,14 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from .forms import RegisterForm, MessageForm, FileTransferForm
 from .models import Message, FileTransfer
+from .models import GroupMessage
+from .forms import GroupMessageForm
+
 
 # Home page (redirect to dashboard if already logged in)
 def home(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('profile')
     return render(request, 'network/home.html')
 
 # Registration view
@@ -35,7 +38,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('dashboard')
+            return redirect('profile')
     else:
         form = AuthenticationForm()
     return render(request, 'network/login.html', {'form': form})
@@ -45,42 +48,37 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-# Dashboard view with message and file handling
 @login_required
-def dashboard(request):
-    # Get received messages and files
-    received_messages = Message.objects.filter(receiver=request.user).order_by('-timestamp')
-    received_files = FileTransfer.objects.filter(receiver=request.user).order_by('-timestamp')
+def profile(request):
+    return render(request, 'network/profile.html', {'user_obj': request.user})
 
-    # Default form instances
-    msg_form = MessageForm(user=request.user)
-    file_form = FileTransferForm(user=request.user)
-
-    # Handle POST requests for message or file sending
+@login_required
+def group_chat(request):
     if request.method == 'POST':
-        if 'send_message' in request.POST:
-            msg_form = MessageForm(request.POST, user=request.user)
-            if msg_form.is_valid():
-                msg = msg_form.save(commit=False)
-                msg.sender = request.user
-                msg.save()
-                return redirect('dashboard')
+        form = GroupMessageForm(request.POST, request.FILES)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user
+            msg.save()
+            return redirect('group_chat')
+    else:
+        form = GroupMessageForm()
+    messages = GroupMessage.objects.order_by('timestamp')
+    return render(request, 'network/group_chat.html', {'form': form, 'messages': messages})
 
-        elif 'send_file' in request.POST:
-            file_form = FileTransferForm(request.POST, request.FILES, user=request.user)
-            if file_form.is_valid():
-                file_instance = file_form.save(commit=False)
-                file_instance.sender = request.user
-                file_instance.save()
-                return redirect('dashboard')
-
-    context = {
-        'msg_form': msg_form,
-        'file_form': file_form,
-        'messages': received_messages,
-        'files': received_files,
-    }
-    return render(request, 'network/dashboard.html', context)
+@login_required
+def group_chat_fetch(request):
+    messages = GroupMessage.objects.order_by('timestamp')
+    data = []
+    for msg in messages:
+        data.append({
+            'sender': msg.sender.username,
+            'content': msg.content,
+            'file_url': msg.file.url if msg.file else '',
+            'file_name': msg.file.name.split('/')[-1] if msg.file else '',
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M')
+        })
+    return JsonResponse({'messages': data})
 
 # AJAX view to fetch updates for real-time message/file updates
 @login_required

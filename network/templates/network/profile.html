@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width: 400px;">
+  <h2>My Profile</h2>
+  <ul class="list-group">
+    <li class="list-group-item bg-dark text-white">Username: {{ user_obj.username }}</li>
+    <li class="list-group-item bg-dark text-white">Email: {{ user_obj.email }}</li>
+    <li class="list-group-item bg-dark text-white">Staff: {{ user_obj.is_staff }}</li>
+    <li class="list-group-item bg-dark text-white">Active: {{ user_obj.is_active }}</li>
+  </ul>
+</div>
+{% endblock %}

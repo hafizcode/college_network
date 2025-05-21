@@ -2,6 +2,8 @@ from django import forms
 from .models import Message, FileTransfer
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from .models import GroupMessage
+
 
 class MessageForm(forms.ModelForm):
     receiver = forms.ModelChoiceField(
@@ -44,3 +46,12 @@ class RegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'password1', 'password2']
+
+
+class GroupMessageForm(forms.ModelForm):
+    class Meta:
+        model = GroupMessage
+        fields = ['content', 'file']
+        widgets = {
+            'content': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Type a message...'}),
+        }
